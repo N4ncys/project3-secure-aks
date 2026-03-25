@@ -1,0 +1,51 @@
+# Deployment for the secure app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workload
+  template:
+    metadata:
+      labels:
+        app: workload
+        # Required label for Workload Identity to work
+        azure.workload.identity/use: "true"
+    spec:
+      # Using the service account linked to our Azure managed identity
+      serviceAccountName: workload-sa
+
+      # Security context applied to all containers in the pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: secure-app
+          image: acraksecuredev.azurecr.io/secure-app:latest
+          ports:
+            - containerPort: 8080
+
+          # Container level security context
+          # Required by our Pod Security Standards restricted policy
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          # Resource limits — prevents a single pod from consuming all node resources
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
