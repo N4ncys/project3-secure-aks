@@ -29,10 +29,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Step 3 — Log in to ACR so we can push images
+      # Step 3 — Log in to ACR using Docker login with service principal credentials
       - name: Log in to ACR
-        run: |
-          az acr login --name acraksecuredev
+        uses: docker/login-action@v3
+        with:
+          registry: acraksecuredev.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
       # Step 4 — Build the Docker image and tag it with the Git commit SHA
       # Using the commit SHA as the tag means every image is traceable to its source code
