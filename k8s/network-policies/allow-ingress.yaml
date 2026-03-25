@@ -1,0 +1,18 @@
+# Allow incoming traffic to app pods from the ingress controller only
+# No other source is allowed to reach app pods directly
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-controller
+  namespace: app
+spec:
+  podSelector:
+    matchLabels:
+      app: workload
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx

@@ -1,0 +1,17 @@
+# Allow all pods in the app namespace to reach the DNS server
+# Without this pods cannot resolve any hostnames and will break
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

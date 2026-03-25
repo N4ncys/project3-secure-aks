@@ -1,0 +1,30 @@
+# Bind the developer role to the workload service account
+# In a real team this would point to an Azure AD group instead
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: app
+subjects:
+  - kind: ServiceAccount
+    name: workload-sa
+    namespace: app
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+---
+# Bind the monitoring role to the monitoring service account
+# Applies across the whole cluster so Prometheus can scrape everywhere
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: monitoring-binding
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-sa
+    namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: monitoring
+  apiGroup: rbac.authorization.k8s.io

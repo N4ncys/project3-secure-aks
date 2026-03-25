@@ -1,0 +1,20 @@
+# App namespace with Pod Security Standards enforced at restricted level
+# enforce — rejects any pod that violates the policy
+# audit — logs violations without blocking them
+# warn — sends a warning to the user but still allows the pod
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+  labels:
+    # Enforce restricted policy — pods that violate this are rejected outright
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+
+    # Audit violations and write them to the audit log
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+
+    # Warn the user if their pod spec violates the policy
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest

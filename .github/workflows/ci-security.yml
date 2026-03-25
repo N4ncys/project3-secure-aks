@@ -1,0 +1,75 @@
+name: Secure CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # Registry and image details
+  REGISTRY: acraksecuredev.azurecr.io
+  IMAGE_NAME: secure-app
+  RESOURCE_GROUP: rg-aks-secure-dev
+  CLUSTER_NAME: aks-secure-dev
+
+jobs:
+  build-scan-push:
+    name: Build, Scan, and Push
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 — Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 — Log in to Azure using a service principal stored in GitHub secrets
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 3 — Log in to ACR so we can push images
+      - name: Log in to ACR
+        run: |
+          az acr login --name acraksecuredev
+
+      # Step 4 — Build the Docker image and tag it with the Git commit SHA
+      # Using the commit SHA as the tag means every image is traceable to its source code
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t $REGISTRY/$IMAGE_NAME:${{ github.sha }} \
+            -t $REGISTRY/$IMAGE_NAME:latest \
+            ./app
+
+      # Step 5 — Scan the image for vulnerabilities using Trivy
+      # This runs before pushing — a vulnerable image never reaches ACR
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      # Step 6 — Only push if the scan passed
+      # If Trivy found critical or high vulnerabilities, this step never runs
+      - name: Push image to ACR
+        run: |
+          docker push $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+          docker push $REGISTRY/$IMAGE_NAME:latest
+
+      # Step 7 — Deploy to AKS by updating the deployment image
+      - name: Deploy to AKS
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+
+      - name: Update deployment
+        run: |
+          kubectl set image deployment/secure-app \
+            secure-app=$REGISTRY/$IMAGE_NAME:${{ github.sha }} \
+            -n app
