@@ -101,8 +101,8 @@ project3-secure-aks/
 
 ## Related Projects
 
-- [Project 1 — Azure Secure Landing Zone](https://github.com/N4ncys/project1-secure-landing-zone)
-- [Project 2 — Cloud Native FastAPI on Azure Container Apps](https://github.com/N4ncys/project2-container-apps)
+- [Project 1 — Azure Secure Landing Zone](https://github.com/N4ncys/azure-secure-landing-zone-terraform)
+- [Project 2 — Azure Cloud-Native Web App with CI/CD](https://github.com/N4ncys/azure-webapp-cicd)
  
  
  
